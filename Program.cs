@@ -3,14 +3,16 @@ using System.Linq;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AlertDbContext>();
+builder.Services.AddRazorPages();
 var app = builder.Build();
+app.MapRazorPages();
 
 // insert into db
 app.MapPost("/alert", async (AlertEvent evt, AlertDbContext db) =>
 {
     db.Alerts.Add(evt);
     await db.SaveChangesAsync();
-    Console.WriteLine($"Saved alert: {evt.Message} | Sound: {evt.SoundValue}");
+    Console.WriteLine($"Saved alert: {evt.Message} | Sound: {evt.SoundValue} |{evt.Timestamp}");
     return Results.Ok();
 });
 
@@ -28,6 +30,7 @@ public class AlertEvent
      public int Id {get; set;}
     public string Message{get; set;} = "";
     public int SoundValue{get; set;}
+    public DateTime Timestamp {get; set;}
 }
 
 public class AlertDbContext : DbContext

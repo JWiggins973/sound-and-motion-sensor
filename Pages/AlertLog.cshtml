@@ -1,0 +1,30 @@
+@page
+@model AlertLogModel
+
+<style>
+    body { background: #1a1a1a; color: #eee; font-family: sans-serif; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #444; padding: 8px; text-align: left; }
+    th { background: #2a2a2a; cursor: pointer; }
+    tr:hover { background: #2a2a2a; }
+</style>
+
+@{
+    ViewData["Title"] = "Wiggins family Sound tracker";
+}
+<h1>@ViewData["Title"]</h1>
+
+<table>
+  <thead><tr><th>ID</th><th>Message</th><th>Sound Value</th><th>Timestamp</th></tr></thead>
+  <tbody>
+    @foreach (var alert in Model.Alerts)
+{
+    <tr>
+        <td>@alert.Id</td>
+        <td>@alert.Message</td>
+        <td>@alert.SoundValue</td>
+        <td>@alert.Timestamp</td>
+    </tr>
+}
+  </tbody>
+</table>
