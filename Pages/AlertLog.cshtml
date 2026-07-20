@@ -6,20 +6,36 @@
     table { border-collapse: collapse; width: 100%; }
     th, td { border: 1px solid #444; padding: 8px; text-align: left; }
     th { background: #2a2a2a; }
+
+    .filter-btn {
+    display: inline-block;
+    color: inherit;
+    text-decoration: none;
+    background: #333;
+    padding: 6px 12px;
+    border-radius: 4px;
+    margin-right: 6px;
+    margin-bottom: 16px;
+    border: 1px solid #555;
+    }
+    .filter-btn:hover {
+    background: #2c5f8a;
+    border-color: #4a90d9;
+    }
 </style>
 
 @{
-    ViewData["Title"] = "Wiggins family Sound tracker";
+    ViewData["Title"] = "Wiggins Family Sound Tracker";
 }
 <h1>@ViewData["Title"]</h1>
 
 <div class="filters">
-    <a href="/AlertLog?Filter=today">Today</a>
-    <a href="/AlertLog?Filter=last24h">Last 24 Hours</a>
-    <a href="/AlertLog?Filter=week">This Week</a>
-    <a href="/AlertLog?Filter=door">Door Events</a>
-    <a href="/AlertLog?Filter=loud">Loud Events</a>
-    <a href="/AlertLog">Show All</a>
+    <a href="/AlertLog?Filter=today" class="filter-btn">Today</a>
+    <a href="/AlertLog?Filter=last24h" class="filter-btn">Last 24 Hours</a>
+    <a href="/AlertLog?Filter=week" class="filter-btn">This Week</a>
+    <a href="/AlertLog?Filter=door" class="filter-btn">Door Events</a>
+    <a href="/AlertLog?Filter=loud" class="filter-btn">Loud Events</a>
+    <a href="/AlertLog" class="filter-btn">Show All</a>
 </div>
 
 <table>

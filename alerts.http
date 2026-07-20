@@ -6,8 +6,7 @@ POST http://10.0.0.141:5238/alert
 Content-Type: application/json
 
 {
-  "message": "TEST",
-  "soundValue": 500
+  "message": "TEST111","soundValue": 500
 }
 
 ### Filter today's alerts
