@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AlertDbContext>();
@@ -8,11 +7,18 @@ var app = builder.Build();
 app.MapRazorPages();
 
 // insert into db
-app.MapPost("/alert", async (AlertEvent dto, AlertDbContext db) =>
+app.MapPost("/alert", async (AlertEventDtos dto, AlertDbContext db) =>
 {
-    db.Alerts.Add(dto);
+    var evt = new AlertEvent
+    {
+        Message = dto.Message,
+        SoundValue = dto.SoundValue,
+        Timestamp = DateTime.Now
+    };
+
+    db.Alerts.Add(evt);
     await db.SaveChangesAsync();
-    Console.WriteLine($"Saved alert: {dto.Message} | Sound: {dto.SoundValue} |{dto.Timestamp}");
+    Console.WriteLine($"Saved Alert;  {evt.Message} | Sound : {evt.SoundValue} | Timestamp: {evt.Timestamp}");
     return Results.Ok();
 });
 

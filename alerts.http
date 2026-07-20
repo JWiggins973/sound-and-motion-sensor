@@ -1,0 +1,26 @@
+### Get all alerts
+GET http://10.0.0.141:5238/alerts
+
+### Post a new alert
+POST http://10.0.0.141:5238/alert
+Content-Type: application/json
+
+{
+  "message": "TEST",
+  "soundValue": 500
+}
+
+### Filter today's alerts
+GET http://10.0.0.141:5238/AlertLog?Filter=today
+
+### Filter Last 24
+GET http://10.0.0.141:5238/AlertLog?Filter=last24h
+
+### Filter weeks alert
+GET http://10.0.0.141:5238/AlertLog?Filter=week
+
+### Filter all door alerts
+GET http://10.0.0.141:5238/AlertLog?Filter=door
+
+### Filter all loud alerts
+GET http://10.0.0.141:5238/AlertLog?Filter=loud

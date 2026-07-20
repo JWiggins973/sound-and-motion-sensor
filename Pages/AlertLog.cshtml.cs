@@ -1,24 +1,58 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
-// inhertits from  built in pagemodel
 public class AlertLogModel : PageModel
 {
-    // once assigned cant be changed
+    // Refrence to the db context assigned once and never assigned 
     private readonly AlertDbContext _db;
 
-    // list to hold db rows
+    // AlertsEvent list to store events drom db context to be used in UI
     public List<AlertEvent> Alerts { get; set; } = new();
 
-    // ASP.NET Core auto-provides db connection here, stores it
+    // Sets starting page number and allos to be fetched by http request
+    [BindProperty(SupportsGet = true)] public int PageNumber { get; set; } = 1;
+
+    // Allows filter to be fetched by http request and null when no filter applied
+    [BindProperty(SupportsGet = true)] public string? Filter {get; set;}
+
+    // Helps determine if there's a next page based on total rows
+    public bool HasNextPage { get; set; }
+
+    private const int PageSize = 20;
+
+    // stores the AlertDbContext instance 
     public AlertLogModel(AlertDbContext db)
     {
         _db = db;
     }
 
-    // updates page on load and relaods
+    // Runs in every GET request  
     public async Task OnGetAsync()
     {
-        Alerts = await _db.Alerts.ToListAsync();
+        var query = _db.Alerts.AsQueryable();
+        
+        // update on prebuilt querys clicks
+        query = Filter switch
+        {
+            "today" => query.Where(a =>a.Timestamp.Date == DateTime.Today),
+            "last24h" => query.Where(a =>a.Timestamp >= DateTime.Now.AddHours(-24)),
+            "week" => query.Where(a => a.Timestamp >= DateTime.Now.AddDays(-7)),
+            "door" => query.Where(a => a.Message == "DOOR OPEN"),
+            "loud" => query.Where(a => a.Message == "LOUD NOISE IN AREA"),
+            _ => query
+        };
+
+        // Sort each page by date descending 
+        query = query.OrderByDescending(a => a.Timestamp);
+
+        // only show accurate page count based on rows
+        int totalCount = await query.CountAsync();
+        HasNextPage = PageSize * PageNumber < totalCount;
+
+        Alerts = await query
+            .Skip(PageSize * (PageNumber - 1))
+            .Take(PageSize)
+            .ToListAsync();
     }
 }

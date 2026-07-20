@@ -5,27 +5,53 @@
     body { background: #1a1a1a; color: #eee; font-family: sans-serif; }
     table { border-collapse: collapse; width: 100%; }
     th, td { border: 1px solid #444; padding: 8px; text-align: left; }
-    th { background: #2a2a2a; cursor: pointer; }
-    tr:hover { background: #2a2a2a; }
+    th { background: #2a2a2a; }
 </style>
-
 
 @{
     ViewData["Title"] = "Wiggins family Sound tracker";
 }
 <h1>@ViewData["Title"]</h1>
 
+<div class="filters">
+    <a href="/AlertLog?Filter=today">Today</a>
+    <a href="/AlertLog?Filter=last24h">Last 24 Hours</a>
+    <a href="/AlertLog?Filter=week">This Week</a>
+    <a href="/AlertLog?Filter=door">Door Events</a>
+    <a href="/AlertLog?Filter=loud">Loud Events</a>
+    <a href="/AlertLog">Show All</a>
+</div>
+
 <table>
-  <thead><tr><th>ID</th><th>Message</th><th>Sound Value</th><th>Timestamp</th></tr></thead>
+  <thead>
+    <tr>
+        <th>ID</th>
+        <th>Message</th>
+        <th>Sound Value</th>
+        <th>Timestamp</th>
+    </tr>
+  </thead>
   <tbody>
     @foreach (var alert in Model.Alerts)
-{
-    <tr>
-        <td>@alert.Id</td>
-        <td>@alert.Message</td>
-        <td>@alert.SoundValue</td>
-        <td>@alert.Timestamp</td>
-    </tr>
-}
+    {
+        <tr>
+            <td>@alert.Id</td>
+            <td>@alert.Message</td>
+            <td>@alert.SoundValue</td>
+            <td>@alert.Timestamp</td>
+        </tr>
+    }
   </tbody>
 </table>
+
+<div class="pagination">
+    @if (Model.PageNumber > 1)
+    {
+        <a href="/AlertLog?PageNumber=@(Model.PageNumber - 1)">Previous</a>
+    }
+    <span>Page @Model.PageNumber</span>
+    @if (Model.HasNextPage)
+    {
+        <a href="/AlertLog?PageNumber=@(Model.PageNumber + 1)">Next</a>
+    }
+</div>
