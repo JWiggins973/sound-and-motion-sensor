@@ -8,11 +8,11 @@ var app = builder.Build();
 app.MapRazorPages();
 
 // insert into db
-app.MapPost("/alert", async (AlertEvent evt, AlertDbContext db) =>
+app.MapPost("/alert", async (AlertEvent dto, AlertDbContext db) =>
 {
-    db.Alerts.Add(evt);
+    db.Alerts.Add(dto);
     await db.SaveChangesAsync();
-    Console.WriteLine($"Saved alert: {evt.Message} | Sound: {evt.SoundValue} |{evt.Timestamp}");
+    Console.WriteLine($"Saved alert: {dto.Message} | Sound: {dto.SoundValue} |{dto.Timestamp}");
     return Results.Ok();
 });
 
@@ -25,17 +25,4 @@ app.MapGet("/alerts",  async (AlertDbContext db) =>
 
 app.Run("http://0.0.0.0:5238");
 
-public class AlertEvent
-{   
-     public int Id {get; set;}
-    public string Message{get; set;} = "";
-    public int SoundValue{get; set;}
-    public DateTime Timestamp {get; set;}
-}
 
-public class AlertDbContext : DbContext
-{
-    public DbSet<AlertEvent> Alerts {get; set;}
-
-    protected override void OnConfiguring(DbContextOptionsBuilder options) => options.UseSqlite("Data Source=alerts.db");
-} 
