@@ -1,5 +1,5 @@
 public class AlertEventDtos
 {
     public string Message {set; get;} = "";
-    public int SoundValue {set; get;}
+    public float SoundValue {set; get;}
 }
