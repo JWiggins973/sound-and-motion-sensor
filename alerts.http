@@ -1,8 +1,8 @@
 ### Get all alerts
-GET http://10.0.0.141:5238/alerts
+GET http://localhost:5238/alerts
 
 ### Post a new alert
-POST http://10.0.0.141:5238/alert
+POST http://localhost:5238/alert
 Content-Type: application/json
 
 {
@@ -10,16 +10,28 @@ Content-Type: application/json
 }
 
 ### Filter today's alerts
-GET http://10.0.0.141:5238/AlertLog?Filter=today
+GET http://localhost:5238/AlertLog?Filter=today
 
 ### Filter Last 24
-GET http://10.0.0.141:5238/AlertLog?Filter=last24h
+GET http://localhost:5238/AlertLog?Filter=last24h
 
 ### Filter weeks alert
-GET http://10.0.0.141:5238/AlertLog?Filter=week
+GET http://localhost:5238/AlertLog?Filter=week
 
 ### Filter all door alerts
-GET http://10.0.0.141:5238/AlertLog?Filter=door
+GET http://localhost:5238/AlertLog?Filter=door
 
 ### Filter all loud alerts
-GET http://10.0.0.141:5238/AlertLog?Filter=loud
+GET http://localhost:5238/AlertLog?Filter=loud
+
+### update live status
+POST http://localhost:5238/update-live-status
+Content-Type: application/json
+
+{
+  "doorOpen": true,
+  "soundValue": 45
+}
+
+### Get live status
+GET http://localhost:5238/live-status

@@ -5,26 +5,27 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 
-#include <secrets.h>
 
-//const char* ssid = "WIFI_SSID";
-//const char* pass ="WIFI_PASS";
+#include "secrets.h"
 
-const char* ssid = "Wokwi-GUEST";
-const char* pass = "";
+const char* ssid = WIFI_SSID;
+const char* pass = WIFI_PASS;
+
+//const char* ssid = "Wokwi-GUEST";
+//const char* pass = "";
 const char* discordWebHookUrl = DISCORD_WEBHOOK_URL;
 const char* backendHost = BACKEND_HOST;
+
+const unsigned long sampleWindow = 10;
+const float V_REF = 3.3;
+const float ADC_MAX = 4095.0;
+
 
 
 class sensor {
   public: 
     const char* ALERT;
     const char* alertMessages[2] = {"DOOR OPEN", "LOUD NOISE IN AREA"};
-    
-    
-    virtual void printAlert() {
-      Serial.println(ALERT);
-    }
 
      virtual ~sensor() = default;
 };
@@ -36,8 +37,8 @@ class motionSensor : public sensor {
     bool wasClose = false;
 
   public:
-    const int MOTION_TRIG = 6;  
-    const int MOTION_ECHO = 7;
+    const int MOTION_TRIG = A3;  
+    const int MOTION_ECHO = A5;
 
     // setters 
     void setDistanceCm() {
@@ -73,32 +74,53 @@ class motionSensor : public sensor {
       return MOTION_ECHO;
     }
 
-    void printAlert() override {
-      if (close && !wasClose){
-      ALERT = alertMessages[0];
-      Serial.println(ALERT);
-      }
-      
-    }
-
 };
 
 class soundDetector : public sensor {
   private:
-    int soundValue = 0;
+    float soundValue = 0;
+    float rawPeak = 0;
     bool loud = false;
     bool wasLoud = false;
+    int loudSound = 65;
   
   public:
-    const int SOUND_SIM = 4; 
+    const int SOUND_SIM = A0; 
 
     // setters
     void setSoundValue() {
-      soundValue = analogRead(this->SOUND_SIM);
+      unsigned long startMillis = millis();
+      unsigned int signalMax = 0;
+      unsigned int signalMin = 4095;
+
+      while (millis() - startMillis < sampleWindow) {
+        unsigned int sample = analogRead(this->SOUND_SIM);
+
+        if (sample < 4096) {
+          if (sample > signalMax) {
+            signalMax = sample;
+          }
+
+          if (sample < signalMin) {
+            signalMin = sample;
+          }
+        }
+      }
+
+      unsigned int peakToPeak = signalMax - signalMin;
+      rawPeak = peakToPeak;
+
+      if (peakToPeak > 0) {
+        float voltagePeakToPeak = (peakToPeak * V_REF) / ADC_MAX;
+        soundValue = 20.0 * log10(voltagePeakToPeak / 0.001);
+      } 
+      else {
+        soundValue = 0;
+      }
     }
 
     void setLoud() {
-      loud =  soundValue > 2000;
+      loud =  soundValue > loudSound;
     }
 
     void setWasLoud(bool wasLoud) {
@@ -109,10 +131,12 @@ class soundDetector : public sensor {
     const int getSoundSim() {
       return SOUND_SIM;
     }
-    int getSoundVal() {
+    float getSoundVal() {
       return soundValue;
     }
-wowo
+
+    float getRawPeak(){ return rawPeak;}
+    
     bool getLoud() {
       return loud;
     }
@@ -120,27 +144,20 @@ wowo
     bool getWasLoud() {
       return wasLoud;
     }
-
-    void printAlert() override {
-      if (loud && !wasLoud) {
-      ALERT = alertMessages[1];
-      Serial.println("Loudness: " + String(soundValue));
-      Serial.println(ALERT);
-      }
-    }
     
 };
 
 motionSensor door;
 soundDetector mic;
 
-TaskHandle_t taskOne; 
+TaskHandle_t taskOne;
 TaskHandle_t taskTwo;
 
 // alert event struct passed to queue
 struct alertEvent {
   const char* message;
-  int soundValue;
+  float soundValue;
+  float rawPeak;
 };
 
 // 4 events can sit in queue with the size of one alert event
@@ -165,13 +182,15 @@ void readSensorTask(void* parameter) {
     door.setClose();
     mic.setLoud();
 
+    // FIXME create local variable to ensure values are updated and not lost!!!! door events frequently happening
+
     // check id door open or sound above threshold 
     if (door.getClose() && !door.getWasClose()) {
-      alertEvent evt = {door.alertMessages[0], -1};
+      alertEvent evt = {door.alertMessages[0], -1, -1};
       xQueueSend(alertQueue, &evt, 0);
     }
-    else if (mic.getLoud() && !mic.getWasLoud()) {
-      alertEvent evt = {mic.alertMessages[1], mic.getSoundVal()};
+    if (mic.getLoud() && !mic.getWasLoud()) {
+      alertEvent evt = {mic.alertMessages[1], mic.getSoundVal(), mic.getRawPeak()};
       xQueueSend(alertQueue, &evt, 0);
     }
     // updates flag to prevent multiple prints
@@ -189,15 +208,13 @@ void alertTask(void* parameter) {
     if (xQueueReceive(alertQueue, &evt, portMAX_DELAY)) {
       // FIX ME we should pass the class to event so we can use built in print?
       if (evt.soundValue != -1) {
-        String discordMessage = evt.message;
         Serial.print("Loudness: ");
         Serial.println(evt.soundValue);
 
       } 
       Serial.println(evt.message);    
       sendDiscordAlert(evt.message);
-      sendBackendAlert(evt.message, evt.soundValue);
-
+      sendBackendAlert(evt.message, evt.soundValue, evt.rawPeak);
 
     }
   }
@@ -219,12 +236,15 @@ void sendDiscordAlert(const char* message) {
 }
 
 // send alert to backend
-void sendBackendAlert(const char* message, int soundValue) {
+void sendBackendAlert(const char* message, float soundValue, float rawPeak) {
   HTTPClient http;
-  http.begin("http://" + String(BACKEND_HOST) + ":5238/alert");
+  http.begin("http://" + String(backendHost) + ":5238/alert");
+
   http.addHeader("Content-Type", "application/json");
 
-  String payload = "{\"message\": \"" + String(message) + "\", \"soundValue\": " + String(soundValue) + "}";
+  // String payload = "{\"message\": \"" + String(message) + "\", \"soundValue\": " + String(soundValue, 1) +  ", \"rawPeakToPeak\": " + String(rawPeak) + "}";
+  String payload = "{\"message\": \"" + String(message) + "\", \"soundValue\": " + String(soundValue, 1) + "}";
+
   int responseCode = http.POST(payload);
 
   Serial.print("Backend response: ");
@@ -235,7 +255,12 @@ void sendBackendAlert(const char* message, int soundValue) {
 
 void setup() {
   // put your setup code here, to run once:
+  
   Serial.begin(115200);
+
+  Serial.print("Reset reason: ");
+  Serial.println(esp_reset_reason());
+
   pinMode(door.MOTION_TRIG, OUTPUT);
   pinMode(door.MOTION_ECHO, INPUT);
   pinMode(mic.SOUND_SIM, INPUT);
@@ -246,15 +271,15 @@ void setup() {
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
+    Serial.println(WiFi.status());
   }
   Serial.println();
   Serial.println("Conencted, IP: ");
   Serial.println(WiFi.localIP());
 
-
   // create task
-  xTaskCreate(readSensorTask, "ReadSensor", 2048, NULL, 2, &taskOne);
-  xTaskCreate(alertTask, "Alert", 4096, NULL, 1, &taskTwo);
+  xTaskCreate(readSensorTask, "ReadSensor", 8192, NULL, 2, &taskOne);
+  xTaskCreate(alertTask, "Alert", 8192, NULL, 1, &taskTwo);
 
   // check free
   Serial.println(uxTaskGetStackHighWaterMark(taskOne));
@@ -265,5 +290,7 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
+  Serial.println("ALIVE");
+  delay(1000);
 
 }

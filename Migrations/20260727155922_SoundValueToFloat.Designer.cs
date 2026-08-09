@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -9,9 +10,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AlertBackend.Migrations
 {
     [DbContext(typeof(AlertDbContext))]
-    partial class AlertDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260727155922_SoundValueToFloat")]
+    partial class SoundValueToFloat
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.10");
@@ -25,9 +28,6 @@ namespace AlertBackend.Migrations
                     b.Property<string>("Message")
                         .IsRequired()
                         .HasColumnType("TEXT");
-
-                    b.Property<float>("RawPeak")
-                        .HasColumnType("REAL");
 
                     b.Property<float>("SoundValue")
                         .HasColumnType("REAL");
