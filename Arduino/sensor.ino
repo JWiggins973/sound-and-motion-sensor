@@ -152,6 +152,7 @@ soundDetector mic;
 
 TaskHandle_t taskOne;
 TaskHandle_t taskTwo;
+TaskHandle_t taskThree;
 
 // alert event struct passed to queue
 struct alertEvent {
@@ -166,8 +167,8 @@ QueueHandle_t alertQueue = xQueueCreate(4, sizeof(alertEvent));
 // task 1 read sensor
 void readSensorTask(void* parameter) {
   while (true) {
-    Serial.print(millis());
-    Serial.println(" ms | sensorTask tick");
+   // Serial.print(millis());
+    // Serial.println(" ms | sensorTask tick");
 
     // task body — never returns
     // Start a new measurement:
@@ -220,6 +221,15 @@ void alertTask(void* parameter) {
   }
 }
 
+// send live status to backend every second
+void liveStatusTask(void* parameter) {
+  while (true) {
+    sendBackendLiveStatus(door.getClose(), mic.getSoundVal());
+    vTaskDelay(pdMS_TO_TICKS(1000));
+  }
+}
+
+
 // send alert to discord webhook
 void sendDiscordAlert(const char* message) {
   HTTPClient http;
@@ -231,6 +241,23 @@ void sendDiscordAlert(const char* message) {
 
   Serial.print("Discord resposne: ");
   Serial.println(responseCode); // 204 sucessful
+
+  http.end();
+}
+
+// send live status to backend
+void sendBackendLiveStatus(bool doorOpen, float soundValue) {
+  HTTPClient http;
+  http.begin("http://" + String(backendHost) + ":5238/update-live-status");
+  http.addHeader("Content-Type", "application/json");
+
+  String payload = "{\"DoorOpen\": " + String(doorOpen ? "true" : "false") + ", \"SoundValue\": " + String(soundValue, 1) + "}";
+
+  Serial.println(payload);
+  int responseCode = http.POST(payload);
+
+  Serial.print("Backend response: ");
+  Serial.println(responseCode);
 
   http.end();
 }
@@ -278,12 +305,14 @@ void setup() {
   Serial.println(WiFi.localIP());
 
   // create task
-  xTaskCreate(readSensorTask, "ReadSensor", 8192, NULL, 2, &taskOne);
-  xTaskCreate(alertTask, "Alert", 8192, NULL, 1, &taskTwo);
+  xTaskCreate(readSensorTask, "ReadSensor", 8192, NULL, 3, &taskOne);
+  xTaskCreate(alertTask, "Alert", 8192, NULL, 2, &taskTwo);
+  xTaskCreate(liveStatusTask, "LiveStatus", 8192, NULL, 1, &taskThree);
 
   // check free
   Serial.println(uxTaskGetStackHighWaterMark(taskOne));
   Serial.println(uxTaskGetStackHighWaterMark(taskTwo));
+  Serial.println(uxTaskGetStackHighWaterMark(taskThree));
 
 
 }
