@@ -57,12 +57,16 @@ AlertBackend/
 See `alerts.http` for example requests.
 
 ## How to run
-1. Create `secrets.h` in `Arduino/` using `secrets.h.example` as a template
-2. Start the backend:
+1. Clone the repo:
+   ```bash
+   git clone https://github.com/JWiggins973/sound-and-motion-senor.git
+   ```
+2. Create `secrets.h` in `Arduino/` using `secrets.h.example` as a template
+3. Start the backend:
    ```bash
    dotnet run
    ```
-3. Flash `sensor.ino` to your Arduino Nano ESP32 S3
+4. Flash `sensor.ino` to your Arduino Nano ESP32 S3
 
 ## Tests
 
