@@ -14,7 +14,6 @@ app.MapPost("/alert", async (AlertEventDtos dto, AlertDbContext db) =>
     {
         Message = dto.Message,
         SoundValue = dto.SoundValue,
-        RawPeak = dto.RawPeak,
         Timestamp = DateTime.Now
     };
 

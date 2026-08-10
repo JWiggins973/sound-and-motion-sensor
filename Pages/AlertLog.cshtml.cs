@@ -36,8 +36,6 @@ public class AlertLogModel : PageModel
         query = Filter switch
         {
             "today" => query.Where(a =>a.Timestamp.Date == DateTime.Today),
-            "last24h" => query.Where(a =>a.Timestamp >= DateTime.Now.AddHours(-24)),
-            "week" => query.Where(a => a.Timestamp >= DateTime.Now.AddDays(-7)),
             "door" => query.Where(a => a.Message == "DOOR OPEN"),
             "loud" => query.Where(a => a.Message == "LOUD NOISE IN AREA"),
             _ => query
