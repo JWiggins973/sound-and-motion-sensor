@@ -1,0 +1,104 @@
+@page
+@model LiveModel
+
+<style>
+    body { background: #1a1a1a; color: #eee; font-family: sans-serif; }
+
+    .page {
+        max-width: 720px;
+        margin: 40px auto;
+        padding: 0 16px;
+    }
+
+    .tabs { border-bottom: 1px solid #444; padding-bottom: 12px; margin-bottom: 20px; }
+    .tab-btn { color: #eee; text-decoration: none; margin-right: 16px; }
+    .tab-btn:hover { color: #5b9bd5; text-decoration: underline; }
+    .tab-btn.active { font-weight: 700; text-decoration: none; }
+
+    h1 { font-size: 1.4rem; margin: 24px 0; }
+
+    .unit { font-size: 0.9rem; font-weight: 400; color: #999; margin-left: 4px; }
+
+    .status-dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 8px;
+        background: #7fdca3;
+        vertical-align: middle;
+    }
+    .alert-value .status-dot { background: #e57373; }
+
+    .card-row {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .card {
+        flex: 1;
+        min-width: 180px;
+        text-align: center;
+        background: #2a2a2a;
+        border: 1px solid #444;
+        border-radius: 8px;
+        padding: 20px 12px;
+    }
+
+    .card-title {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #999;
+        margin: 0 0 8px;
+    }
+
+    .card-text {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .alert-value { color: #e57373; }
+</style>
+
+@{
+    ViewData["Title"] = "Wiggins Family Home Monitor";
+}
+<div class="page">
+    <div class="tabs">
+        <a href="/Live" class="tab-btn active">Live Status</a>
+        <a href="/AlertLog" class="tab-btn">Alert Log</a>
+    </div>
+
+    <h1>@ViewData["Title"]</h1>
+
+    <div class="card-row">
+        <div class="card">
+            <p class="card-title">Sound 👂🏽</p>
+            <p class="card-text @(Model.LiveStatus.SoundValue >= 65 ? "alert-value" : "")" id="soundValue"><span id="soundText">@Model.LiveStatus.SoundValue</span><span class="unit">dB</span></p>
+        </div>
+
+        <div class="card">
+            <p class="card-title">Door 🚪</p>
+            <p class="card-text @(Model.LiveStatus.DoorOpen ? "alert-value" : "")" id="doorValue"><span class="status-dot"></span><span id="doorText">@(Model.LiveStatus.DoorOpen ? "Open" : "Closed")</span></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    setInterval(() => {
+        fetch('/live-status')
+        .then(res => res.json())
+        .then(data => {
+            const soundEl = document.getElementById('soundValue');
+            document.getElementById('soundText').textContent = data.soundValue;
+            soundEl.classList.toggle('alert-value', data.soundValue >= 65); // matches loudSound threshold in sensor.ino
+
+            const doorEl = document.getElementById('doorValue');
+            document.getElementById('doorText').textContent = data.doorOpen ? "Open" : "Closed";
+            doorEl.classList.toggle('alert-value', data.doorOpen);
+         });
+    }, 1000);
+</script>

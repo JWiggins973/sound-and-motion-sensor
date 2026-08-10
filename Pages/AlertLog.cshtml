@@ -3,9 +3,20 @@
 
 <style>
     body { background: #1a1a1a; color: #eee; font-family: sans-serif; }
+
+    .page {
+        max-width: 720px;
+        margin: 40px auto;
+        padding: 0 16px;
+    }
+
+    h1 { font-size: 1.4rem; margin: 24px 0; }
+
     table { border-collapse: collapse; width: 100%; }
     th, td { border: 1px solid #444; padding: 8px; text-align: left; }
     th { background: #2a2a2a; }
+    tbody tr:nth-child(even) { background: #222; }
+    tbody tr:hover { background: #333; }
 
     .filter-btn {
     display: inline-block;
@@ -19,57 +30,75 @@
     border: 1px solid #555;
     }
     .filter-btn:hover {
-    background: #2c5f8a;
-    border-color: #4a90d9;
+    background: #3a6ea5;
+    border-color: #5b9bd5;
     }
+    .filter-btn.active {
+    background: #3a6ea5;
+    border-color: #5b9bd5;
+    font-weight: 700;
+    }
+
+    .tabs { border-bottom: 1px solid #444; padding-bottom: 12px; margin-bottom: 20px; }
+    .tab-btn { color: #eee; text-decoration: none; margin-right: 16px; }
+    .tab-btn:hover { color: #5b9bd5; text-decoration: underline; }
+    .tab-btn.active { font-weight: 700; text-decoration: none; }
+
+    .pagination span { font-weight: 700; margin: 0 8px; }
+
 </style>
 
 @{
-    ViewData["Title"] = "Wiggins Family Sound Tracker";
+    ViewData["Title"] = "Wiggins Family Home Monitor";
 }
-<h1>@ViewData["Title"]</h1>
 
-<div class="filters">
-    <a href="/AlertLog?Filter=today" class="filter-btn">Today</a>
-    <a href="/AlertLog?Filter=last24h" class="filter-btn">Last 24 Hours</a>
-    <a href="/AlertLog?Filter=week" class="filter-btn">This Week</a>
-    <a href="/AlertLog?Filter=door" class="filter-btn">Door Events</a>
-    <a href="/AlertLog?Filter=loud" class="filter-btn">Loud Events</a>
-    <a href="/AlertLog" class="filter-btn">Show All</a>
-</div>
+<div class="page">
+    <div class="tabs">
+        <a href="/AlertLog" class="tab-btn active">Alert Log</a>
+        <a href="/Live" class="tab-btn">Live Status</a>
+    </div>
 
-<table>
-  <thead>
-    <tr>
-        <th>ID</th>
-        <th>Message</th>
-        <th>Sound Value</th>
-        <th>Raw Peak Value</th>
-        <th>Timestamp</th>
-    </tr>
-  </thead>
-  <tbody>
-    @foreach (var alert in Model.Alerts)
-    {
+    <h1>@ViewData["Title"]</h1>
+
+    <div class="filters">
+        <a href="/AlertLog?Filter=today" class="filter-btn @(Model.Filter == "today" ? "active" : "")">Today</a>
+        <a href="/AlertLog?Filter=door" class="filter-btn @(Model.Filter == "door" ? "active" : "")">Door Events</a>
+        <a href="/AlertLog?Filter=loud" class="filter-btn @(Model.Filter == "loud" ? "active" : "")">Loud Events</a>
+        <a href="/AlertLog" class="filter-btn @(Model.Filter == null ? "active" : "")">Show All</a>
+    </div>
+
+    <table>
+      <thead>
         <tr>
-            <td>@alert.Id</td>
-            <td>@alert.Message</td>
-            <td>@alert.SoundValue</td>
-            <td>@alert.RawPeak</td>
-            <td>@alert.Timestamp</td>
+            <th>ID</th>
+            <th>Message</th>
+            <th>Sound Value</th>
+            <th>Timestamp</th>
         </tr>
-    }
-  </tbody>
-</table>
+      </thead>
+      <tbody>
+        @foreach (var alert in Model.Alerts)
+        {
+            <tr>
+                <td>@alert.Id</td>
+                <td>@alert.Message</td>
+                <td>@alert.SoundValue</td>
 
-<div class="pagination">
-    @if (Model.PageNumber > 1)
-    {
-        <a href="/AlertLog?PageNumber=@(Model.PageNumber - 1)">Previous</a>
-    }
-    <span>Page @Model.PageNumber</span>
-    @if (Model.HasNextPage)
-    {
-        <a href="/AlertLog?PageNumber=@(Model.PageNumber + 1)">Next</a>
-    }
+                <td>@alert.Timestamp</td>
+            </tr>
+        }
+      </tbody>
+    </table>
+
+    <div class="pagination">
+        @if (Model.PageNumber > 1)
+        {
+            <a href="/AlertLog?PageNumber=@(Model.PageNumber - 1)" class="tab-btn">Previous</a>
+        }
+        <span>Page @Model.PageNumber</span>
+        @if (Model.HasNextPage)
+        {
+            <a href="/AlertLog?PageNumber=@(Model.PageNumber + 1)" class="tab-btn">Next</a>
+        }
+    </div>
 </div>

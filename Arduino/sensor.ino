@@ -157,8 +157,8 @@ TaskHandle_t taskThree;
 // alert event struct passed to queue
 struct alertEvent {
   const char* message;
+  bool isLoud;
   float soundValue;
-  float rawPeak;
 };
 
 // 4 events can sit in queue with the size of one alert event
@@ -187,11 +187,11 @@ void readSensorTask(void* parameter) {
 
     // check id door open or sound above threshold 
     if (door.getClose() && !door.getWasClose()) {
-      alertEvent evt = {door.alertMessages[0], -1, -1};
+      alertEvent evt = {door.alertMessages[0], false, 0};
       xQueueSend(alertQueue, &evt, 0);
     }
     if (mic.getLoud() && !mic.getWasLoud()) {
-      alertEvent evt = {mic.alertMessages[1], mic.getSoundVal(), mic.getRawPeak()};
+      alertEvent evt = {mic.alertMessages[1], true, mic.getSoundVal()};
       xQueueSend(alertQueue, &evt, 0);
     }
     // updates flag to prevent multiple prints
@@ -208,14 +208,13 @@ void alertTask(void* parameter) {
     
     if (xQueueReceive(alertQueue, &evt, portMAX_DELAY)) {
       // FIX ME we should pass the class to event so we can use built in print?
-      if (evt.soundValue != -1) {
+      if (evt.isLoud) {
         Serial.print("Loudness: ");
         Serial.println(evt.soundValue);
-
       } 
       Serial.println(evt.message);    
       sendDiscordAlert(evt.message);
-      sendBackendAlert(evt.message, evt.soundValue, evt.rawPeak);
+      sendBackendAlert(evt.message, evt.soundValue); 
 
     }
   }
@@ -263,7 +262,7 @@ void sendBackendLiveStatus(bool doorOpen, float soundValue) {
 }
 
 // send alert to backend
-void sendBackendAlert(const char* message, float soundValue, float rawPeak) {
+void sendBackendAlert(const char* message, float soundValue) {
   HTTPClient http;
   http.begin("http://" + String(backendHost) + ":5238/alert");
 
