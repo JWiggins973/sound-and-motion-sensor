@@ -3,9 +3,18 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AlertDbContext>();
 builder.Services.AddSingleton<LiveStatusStore>();
-builder.Services.AddRazorPages();
+builder.Services.AddRazorPages(options =>
+{
+    options.Conventions.AddPageRoute("/Live", "");
+});
 var app = builder.Build();
 app.MapRazorPages();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AlertDbContext>();
+    db.Database.Migrate();
+}
 
 // insert into db
 app.MapPost("/alert", async (AlertEventDtos dto, AlertDbContext db) =>
