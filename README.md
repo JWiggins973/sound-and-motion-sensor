@@ -3,6 +3,15 @@
 A home alert system. An ESP32 watches a door and a microphone, alerts to
 Discord and this backend, and the backend logs and displays it all.
 
+<img src="Images/liveUpdate.png" alt="Live update" width="450">
+
+<img src="Images/visualDb.png" alt="database" width="450">
+
+<img src="Images/prototype.png" alt="Build" width="450">
+
+
+
+
 ## Why I built this
 - Didn't want to buy a front door sensor
 - Wanted to track how loud my apartment gets
